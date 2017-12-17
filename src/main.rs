@@ -1,3 +1,5 @@
+extern crate chrono;
+extern crate circular_queue;
 extern crate ggez;
 extern crate serde;
 extern crate serde_json;
@@ -19,7 +21,6 @@ use poloniex_api_2::{
 
 fn main() {
 	let (sink, stream) = channel();
-	let frontend = frontend::start(stream);
-	let backend = backend::start(URL.to_string(), sink);
-	frontend.join().and(backend.join()).or::<()>(Ok(())).unwrap();
+	backend::start(URL.to_string(), sink);
+	frontend::start(stream);
 }

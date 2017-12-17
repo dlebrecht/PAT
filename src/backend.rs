@@ -23,7 +23,6 @@ use poloniex_api_2::{
   Channel
 };
 
-use std::collections::HashMap;
 use std::sync::mpsc::{
 	Sender
 };
@@ -56,11 +55,12 @@ fn handle_events(client: &mut WebSocket, sink: Sender<State>) -> Result<(), WebS
   subscribe(client, &format!("\"{}\"", PAIR));
 
   let mut state = State::new();
+  state.pairs.push(114);
 
   for message in client.incoming_messages() {
     message
       .and_then(|msg| handle_message(msg, &mut state, &sink))
-      .or_else(handle_error);
+      .or_else(handle_error)?;
   }
 
   Ok(())
@@ -84,27 +84,27 @@ fn handle_text(txt: &str, state: &mut State, sink: &Sender<State>) {
 
 // Where you'd do all your logic.
 fn interpret(json: &Value, state: &mut State, sink: &Sender<State>) {
-  match get_channel(&json[0]) {
+  match get_channel(json[0].clone()) {
     Channel::MarketXMR => {
-      let market_id = serde_json::from_value::<u32>(json[0].clone()).unwrap().to_string();
-      MarketEvent::handle(&market_id, json, state);
-      sink.send(state.clone()).unwrap();
+      let market_id = json[0].as_u64().unwrap();
+      MarketEvent::handle(market_id, json, state);
+      sink.send((*state).clone()).unwrap();
     },
     Channel::Ticker => { 
       if json[1] == 1 { return; }
-      let market_id = serde_json::from_value::<u32>(json[2][0].clone()).unwrap().to_string();
-      if market_id != "114" { return; }
+      let market_id = json[2][0].as_u64().unwrap();
+      if market_id != 114 { return; }
 
-      TickerEvent::handle(&market_id, json, state);
-      sink.send(state.clone()).unwrap();
+      TickerEvent::handle(market_id, json, state);
+      sink.send((*state).clone()).unwrap();
     },
     //Channel::Stats => json[2][1].to_string().render(),
     _ => ()
   }
 }
 
-fn get_channel(json: &Value) -> Channel {
-  let channel_num = match json.clone() {
+fn get_channel(json: Value) -> Channel {
+  let channel_num = match json {
     Number(num) => num.as_u64(),
     _ => None
   };
