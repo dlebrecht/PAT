@@ -2,6 +2,8 @@
 
 This tool was written to further my learning of Rust.
 
+![Screenshot of P.A.T.](./screenshot.png "Screenshot of P.A.T. in action")
+
 I have tried my best to keep simple, concise code, while demonstrating several features of the language and the following goals:
 
 1. Enumerations
